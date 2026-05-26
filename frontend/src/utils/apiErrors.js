@@ -20,7 +20,7 @@ export function getApiErrorMessage(error) {
     message.includes("NetworkError") ||
     message.includes("Load failed")
   ) {
-    return "Backend server is not running. Start Django with: python manage.py runserver (http://127.0.0.1:8000)";
+    return "Unable to connect to backend server. Please try again after a few seconds.";
   }
 
   // Gemini quota / rate limit
