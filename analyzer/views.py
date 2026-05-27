@@ -34,6 +34,7 @@ class ResumeUploadView(APIView):
 
         file_bytes = resume_file.read()
         extracted_text = extract_text_from_pdf(file_bytes)
+        extracted_text = extracted_text[:6000]
 
         if not extracted_text.strip():
             return Response(

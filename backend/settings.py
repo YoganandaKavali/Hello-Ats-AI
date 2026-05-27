@@ -12,16 +12,28 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Load environment variables from backend/.env (GEMINI_API_KEY, etc.)
 load_dotenv(BASE_DIR / "backend" / ".env")
 
-SECRET_KEY = os.environ.get(
-    "DJANGO_SECRET_KEY",
-    "django-insecure-*jgsnv_x#9pw-1ef(nhi2e7pt4lhv#(tv1*eyoqh&xxa=3=1q6",
+# Prefer DJANGO_SECRET_KEY; SECRET_KEY is accepted for Render compatibility
+_INSECURE_DEV_FALLBACK = "django-insecure-*jgsnv_x#9pw-1ef(nhi2e7pt4lhv#(tv1*eyoqh&xxa=3=1q6"
+SECRET_KEY = (
+    os.environ.get("DJANGO_SECRET_KEY")
+    or os.environ.get("SECRET_KEY")
+    or _INSECURE_DEV_FALLBACK
 )
 
 DEBUG = os.environ.get("DJANGO_DEBUG", "True").lower() in ("true", "1", "yes")
 
+if not DEBUG and SECRET_KEY == _INSECURE_DEV_FALLBACK:
+    raise ValueError(
+        "DJANGO_SECRET_KEY (or SECRET_KEY) must be set in production. "
+        "Add it to Render environment variables."
+    )
+
 ALLOWED_HOSTS = [
     host.strip()
-    for host in os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+    for host in os.environ.get(
+        "DJANGO_ALLOWED_HOSTS",
+        "localhost,127.0.0.1,hello-ats-ai.onrender.com",
+    ).split(",")
     if host.strip()
 ]
 
@@ -114,7 +126,7 @@ REST_FRAMEWORK = {
 }
 
 # ---------------------------------------------------------------------------
-# CORS — React dev servers (Create React App & Vite)
+# CORS — local dev + production frontends (Vercel, etc.)
 # ---------------------------------------------------------------------------
 CORS_ALLOWED_ORIGINS = [
     origin.strip()
@@ -126,7 +138,24 @@ CORS_ALLOWED_ORIGINS = [
     if origin.strip()
 ]
 
+# Vercel preview & production URLs (e.g. *.vercel.app)
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    regex.strip()
+    for regex in os.environ.get(
+        "CORS_ALLOWED_ORIGIN_REGEXES",
+        r"^https://.*\.vercel\.app$",
+    ).split(",")
+    if regex.strip()
+]
+
 CORS_ALLOW_CREDENTIALS = True
+
+# Django 4+ — required if using session/cookie auth across origins
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",")
+    if origin.strip()
+] + [o for o in CORS_ALLOWED_ORIGINS if o.startswith("https://")]
 
 # ---------------------------------------------------------------------------
 # Resume upload constraints (PRD §15 — Security)

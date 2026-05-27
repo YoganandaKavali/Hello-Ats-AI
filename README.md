@@ -180,6 +180,33 @@ Output: `frontend/dist/` — serve via nginx, Vercel, Netlify, etc. Point `VITE_
 
 ---
 
+## Deploying (Vercel + Render)
+
+**Frontend (Vercel)** — set environment variable:
+
+```env
+VITE_API_BASE_URL=https://hello-ats-ai.onrender.com
+```
+
+**Backend (Render)** — set environment variables:
+
+```env
+DJANGO_ALLOWED_HOSTS=hello-ats-ai.onrender.com
+DJANGO_DEBUG=False
+GEMINI_API_KEY=your-key
+GEMINI_MODEL=gemini-2.5-flash
+```
+
+CORS: settings allow `https://*.vercel.app` by default via regex. For a custom domain, add:
+
+```env
+CORS_ALLOWED_ORIGINS=https://your-production-domain.com
+```
+
+Redeploy Render after changing env vars.
+
+---
+
 ## Troubleshooting
 
 | Issue | Fix |
@@ -188,7 +215,17 @@ Output: `frontend/dist/` — serve via nginx, Vercel, Netlify, etc. Point `VITE_
 | “GEMINI_API_KEY is not configured” | Add key to `backend/.env`, restart Django |
 | “Gemini API quota exceeded” | Wait or upgrade plan; try `GEMINI_MODEL=gemini-2.5-flash` |
 | “Invalid PDF” | Use a text-based PDF, not image-only scans |
-| CORS errors | Ensure frontend origin is in `CORS_ALLOWED_ORIGINS` in Django settings |
+| **CORS blocked** (Vercel → Render) | Redeploy backend with updated `settings.py`; set `CORS_ALLOWED_ORIGINS` or rely on `*.vercel.app` regex; see below |
+
+### CORS error explained
+
+Browsers block JavaScript on `https://hello-ats-….vercel.app` from reading responses from `https://hello-ats-ai.onrender.com` unless the API responds with:
+
+```http
+Access-Control-Allow-Origin: https://hello-ats-….vercel.app
+```
+
+Your Django app only allowed `localhost` origins, so the browser blocked the request. `net::ERR_FAILED` often appears together with CORS because the browser hides the real response when CORS fails.
 
 ---
 

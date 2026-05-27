@@ -20,7 +20,14 @@ export function getApiErrorMessage(error) {
     message.includes("NetworkError") ||
     message.includes("Load failed")
   ) {
-    return "Unable to connect to backend server. Please try again after a few seconds.";
+    const isLocal =
+      typeof window !== "undefined" &&
+      (window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1");
+    if (isLocal) {
+      return "Backend server is not running. Start Django with: python manage.py runserver (http://127.0.0.1:8000)";
+    }
+    return "Cannot reach the API server. Check that Render is running at https://hello-ats-ai.onrender.com and redeploy the frontend with VITE_API_BASE_URL set.";
   }
 
   // Gemini quota / rate limit

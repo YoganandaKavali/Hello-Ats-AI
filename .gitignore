@@ -3,6 +3,7 @@
 .env.*
 !.env.example
 !**/.env.example
+!frontend/.env.production
 backend/.env
 frontend/.env
 
@@ -43,3 +44,5 @@ Thumbs.db
 
 # Local test artifacts
 sample_resume.pdf
+
+.vercel
